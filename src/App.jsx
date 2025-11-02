@@ -6,7 +6,7 @@ import LofiPlayer from './LofiPlayer';
 import EarthAndMoon from './EarthAndMoon';
 import Orbit from './Orbit';
 import Planet from './Planet';
-import { StopCircleIcon } from 'lucide-react';
+import { HelpCircle, StopCircleIcon } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 
 // 🌌 Space background
@@ -83,7 +83,7 @@ function CameraFollow({ targetRef, cameraRef, follow, zoomOut, setZoomOut }) {
 
       if (cameraRef.current.position.distanceTo(defaultPos) < 0.1) {
         setZoomOut(false);
-      }
+      } Camera
     }
     // ELSE do nothing, OrbitControls is free
   });
@@ -109,9 +109,27 @@ export default function App() {
       <Toaster />
       <div className="w-screen h-screen bg-black relative">
         {/* Floating Top Panel */}
-        <div className="absolute top-5 left-5 sm:w-100 w-[calc(100vw-2.5rem)] z-20 flex flex-col gap-3 bg-base-200 backdrop-blur-md p-4 rounded-xl shadow-lg text-base-content">
+        <div className="absolute top-5 left-5 group sm:w-100 w-[calc(100vw-2.5rem)] z-20 flex flex-col gap-3 bg-base-200 backdrop-blur-md p-4 rounded-xl shadow-lg text-base-content">
           {/* Heading */}
-          <h2 className="text-xs font-semibold opacity-80 -mb-1 uppercase">CLICK A PLANET TO FOLLOW IT</h2>
+          <div className='flex justify-between items-center gap-5'>
+            <h2 className="text-xs font-semibold opacity-80 -mb-1 uppercase">CLICK A PLANET TO FOLLOW IT</h2>
+            {/* HELP  */}
+            <button className="group-hover:inline-flex hidden -mb-1 py-0 p-0 opacity-70" onClick={() => document.getElementById('my_modal_2').showModal()}><HelpCircle size={15} /></button>
+            <dialog id="my_modal_2" className="modal">
+              <div className="modal-box">
+                <h3 className="font-bold text-lg">Welcome to the Solar System Simulator</h3>
+                <p className="py-4">
+                  On desktop, left-click and drag to look around, and right-click to move the entire system.
+                  On mobile, use one finger to rotate the view, and two fingers to pan the system.
+                </p>
+                <p>Thanks for your time.</p>
+                <p>— Nabeel</p>
+              </div>
+              <form method="dialog" className="modal-backdrop">
+                <button>close</button>
+              </form>
+            </dialog>
+          </div>
 
           {/* Planet Buttons */}
           <div className="flex flex-wrap gap-1 justify-between">
@@ -131,8 +149,8 @@ export default function App() {
                   className="btn hover:bg-neutral btn-base-300 active:scale-95 transition-all duration-250 btn-xs btn-square flex items-center justify-center"
                   onClick={() => {
                     setFollowTarget(planet.ref);
-                    toast.success(`Following ${planet.name.charAt(0).toUpperCase() + planet.name.slice(1)}`);
                     setZoomOut(false);
+                    toast.success(`Following ${planet.name.charAt(0).toUpperCase() + planet.name.slice(1)}`);
                   }}
                 >
                   <img src={`/planets/${planet.name}.png`} alt={planet.name} width={30} height={30} />
@@ -146,8 +164,8 @@ export default function App() {
                   className="btn btn-xs btn-error flex items-center justify-center gap-1"
                   onClick={() => {
                     setFollowTarget(null);
-                    toast.success('Stopped Following');
                     setZoomOut(true);
+                    toast.success('Stopped Following');
                   }}
                 >
                   <StopCircleIcon size={13} /> Stop
