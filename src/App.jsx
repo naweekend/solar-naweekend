@@ -4,10 +4,9 @@ import { useRef, useState } from 'react';
 import * as THREE from 'three';
 import LofiPlayer from './LofiPlayer';
 import EarthAndMoon from './EarthAndMoon';
-import Orbit from './Orbit';
 import Planet from './Planet';
 import { HelpCircle, RotateCcw, StopCircleIcon } from 'lucide-react';
-import toast, { Toaster } from 'react-hot-toast';
+import { toast, Toaster } from 'sonner';
 import FullScreenButton from './FullScreenButton';
 
 // 🌌 Space background
@@ -119,7 +118,12 @@ export default function App() {
 
   return (
     <>
-      <Toaster />
+      <Toaster toastOptions={{
+        classNames: {
+          toast: '!bg-base-200 !text-base-content !border-0',
+        },
+      }}
+        mobileOffset={{ bottom: "160px" }} style={{ width: "400px", marginLeft: "6px" }} visibleToasts={1} richColors dismissible />
       <div className="w-screen h-screen bg-black relative">
         {/* Floating Top Panel */}
         <div className="absolute top-5 left-5 group sm:w-100 w-[calc(100vw-2.5rem)] z-20 flex flex-col gap-3 bg-base-200 backdrop-blur-md p-4 rounded-xl shadow-lg text-base-content">
