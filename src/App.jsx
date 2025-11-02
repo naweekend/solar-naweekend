@@ -83,7 +83,7 @@ function CameraFollow({ targetRef, cameraRef, follow, zoomOut, setZoomOut }) {
       const pos = new THREE.Vector3();
       targetRef.current.getWorldPosition(pos);
 
-      cameraRef.current.position.lerp(new THREE.Vector3(pos.x - 20, pos.y + 20, pos.z - 20), 0.05);
+      cameraRef.current.position.lerp(new THREE.Vector3(pos.x + 20, pos.y + 10, pos.z + 30), 0.05);
       cameraRef.current.lookAt(pos);
     } else if (zoomOut) {
       // Smooth zoom-out
