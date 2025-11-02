@@ -6,6 +6,7 @@ import LofiPlayer from './LofiPlayer';
 import EarthAndMoon from './EarthAndMoon';
 import Orbit from './Orbit';
 import Planet from './Planet';
+import { StopCircle, StopCircleIcon } from 'lucide-react';
 
 // 🌌 Space background
 function Background() {
@@ -62,15 +63,29 @@ function Saturn({ showOrbit, ref }) {
 
 // Camera follow
 function CameraFollow({ targetRef, cameraRef, follow }) {
+  const defaultPos = new THREE.Vector3(0, 40, 80);
+  const defaultLookAt = new THREE.Vector3(0, 0, 0);
+
   useFrame(() => {
-    if (follow && targetRef.current && cameraRef.current) {
+    if (!cameraRef.current) return;
+
+    if (follow && targetRef?.current) {
+      // Follow a planet
       const pos = new THREE.Vector3();
       targetRef.current.getWorldPosition(pos);
 
-      cameraRef.current.position.lerp(new THREE.Vector3(pos.x + 10, pos.y + 5, pos.z + 10), 0.05);
+      cameraRef.current.position.lerp(
+        new THREE.Vector3(pos.x + 10, pos.y + 5, pos.z + 10),
+        0.05
+      );
       cameraRef.current.lookAt(pos);
+    } else {
+      // Smoothly zoom out to default view
+      cameraRef.current.position.lerp(defaultPos, 0.05);
+      cameraRef.current.lookAt(defaultLookAt);
     }
   });
+
   return null;
 }
 
@@ -91,30 +106,50 @@ export default function App() {
   return (
     <div className="w-screen h-screen bg-black relative">
       {/* Floating Top Panel */}
-      <div className="absolute top-5 left-1/2 -translate-x-1/2 z-20 flex items-center gap-3 bg-gray-900/80 backdrop-blur-md p-3 rounded-xl shadow-lg text-white">
-        <label className="flex items-center gap-1">
-          <input
-            type="checkbox"
-            className="checkbox checkbox-sm checkbox-primary"
-            checked={showOrbits}
-            onChange={() => setShowOrbits(!showOrbits)}
-          />
-          Show Orbits
-        </label>
+      <div className="absolute top-5 left-5 sm:w-100 w-[calc(100vw-2.5rem)] z-20 flex flex-col gap-3 bg-[#191E24]/90 backdrop-blur-md p-4 rounded-xl shadow-lg text-white">
+        {/* Top Row: Show Orbits + Stop Button */}
+        <div className="flex items-center justify-between">
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              className="checkbox checkbox-xs checkbox-primary"
+              checked={showOrbits}
+              onChange={() => setShowOrbits(!showOrbits)}
+            />
+            Show Orbits
+          </label>
+        </div>
 
-        {/* Planet buttons */}
-        <div className="flex gap-1">
-          <button className="btn btn-xs btn-outline" onClick={() => setFollowTarget(mercuryRef)}>Mercury</button>
-          <button className="btn btn-xs btn-outline" onClick={() => setFollowTarget(venusRef)}>Venus</button>
-          <button className="btn btn-xs btn-outline" onClick={() => setFollowTarget(earthRef)}>Earth</button>
-          <button className="btn btn-xs btn-outline" onClick={() => setFollowTarget(marsRef)}>Mars</button>
-          <button className="btn btn-xs btn-outline" onClick={() => setFollowTarget(jupiterRef)}>Jupiter</button>
-          <button className="btn btn-xs btn-outline" onClick={() => setFollowTarget(saturnRef)}>Saturn</button>
-          <button className="btn btn-xs btn-outline" onClick={() => setFollowTarget(uranusRef)}>Uranus</button>
-          <button className="btn btn-xs btn-outline" onClick={() => setFollowTarget(neptuneRef)}>Neptune</button>
-          <button className="btn btn-xs btn-outline" onClick={() => setFollowTarget(null)}>Stop</button>
+        {/* Optional Heading */}
+        <h2 className="text-xs font-semibold text-gray-300 -mb-1 uppercase">CLICK A PLANET TO FOLLOW IT</h2>
+
+        {/* Planet Buttons */}
+        <div className="flex flex-wrap gap-1">
+          {[
+            { name: 'Mercury', ref: mercuryRef },
+            { name: 'Venus', ref: venusRef },
+            { name: 'Earth', ref: earthRef },
+            { name: 'Mars', ref: marsRef },
+            { name: 'Jupiter', ref: jupiterRef },
+            { name: 'Saturn', ref: saturnRef },
+            { name: 'Uranus', ref: uranusRef },
+            { name: 'Neptune', ref: neptuneRef },
+            { name: "Stop Following", ref: null },
+          ].map((planet) => (
+            <button
+              key={planet.name}
+              className={`btn btn-xs btn-accent w-[60px] ${planet.name === 'Stop Following' ? 'w-[125px] btn-error' : ''} flex items-center justify-center`}
+              onClick={() => setFollowTarget(planet.ref)}
+            >
+              <span className={`${planet.name === 'Stop Following' ? '' : 'hidden'}`}>
+                <StopCircleIcon size={13} />
+              </span>
+              {planet.name}
+            </button>
+          ))}
         </div>
       </div>
+      {/* Floating Top Panel END */}
 
       <Canvas
         camera={{ position: [0, 40, 80], fov: 60 }}
