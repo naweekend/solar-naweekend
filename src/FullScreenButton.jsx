@@ -34,6 +34,7 @@ export default function FullScreenButton() {
 
   return (
     <button
+      style={{ outline: 0 }}
       onClick={toggleFullscreen}
       className="active:scale-95 cursor-pointer transition-all duration-250"
     >
