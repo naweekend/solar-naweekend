@@ -63,7 +63,7 @@ function Saturn({ showOrbit, ref }) {
           map={ringTexture}
           side={THREE.DoubleSide}
           transparent
-          opacity={1}
+          opacity={0.5}
         />
       </mesh>
     </Planet>
