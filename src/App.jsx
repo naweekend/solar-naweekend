@@ -123,7 +123,7 @@ export default function App() {
           <div className='flex justify-between items-center gap-5'>
             <h2 className="text-xs font-semibold opacity-80 -mb-1 uppercase">CLICK A PLANET TO FOLLOW IT</h2>
             {/* HELP  */}
-            <button className="max-md:inline-flex group-hover:inline-flex hidden -mb-1 py-0 p-0 opacity-70" onClick={() => document.getElementById('my_modal_2').showModal()}><HelpCircle size={15} /></button>
+            <button className="max-md:inline-flex cursor-help group-hover:inline-flex hidden -mb-1 py-0 p-0 opacity-70" onClick={() => document.getElementById('my_modal_2').showModal()}><HelpCircle size={15} /></button>
             <dialog id="my_modal_2" className="modal">
               <div className="modal-box">
                 <h3 className="font-bold text-lg">Welcome to the Solar System Simulator</h3>
@@ -153,17 +153,19 @@ export default function App() {
                 { name: 'uranus', ref: uranusRef },
                 { name: 'neptune', ref: neptuneRef },
               ].map((planet) => (
-                <button
-                  key={planet.name}
-                  className="btn hover:bg-neutral btn-base-300 active:scale-95 transition-all duration-250 btn-xs btn-square flex items-center justify-center"
-                  onClick={() => {
-                    setFollowTarget(planet.ref);
-                    setZoomOut(false);
-                    toast.success(`Following ${planet.name.charAt(0).toUpperCase() + planet.name.slice(1)}`);
-                  }}
-                >
-                  <img src={`/planets/${planet.name}.png`} alt={planet.name} width={30} height={30} />
-                </button>
+                <div className="tooltip" data-tip={planet.name.charAt(0).toUpperCase() + planet.name.slice(1)}>
+                  <button
+                    key={planet.name}
+                    className="btn hover:bg-neutral btn-base-300 active:scale-95 transition-all duration-250 btn-xs btn-square flex items-center justify-center"
+                    onClick={() => {
+                      setFollowTarget(planet.ref);
+                      setZoomOut(false);
+                      toast.success(`Following ${planet.name.charAt(0).toUpperCase() + planet.name.slice(1)}`);
+                    }}
+                  >
+                    <img src={`/planets/${planet.name}.png`} alt={planet.name} width={30} height={30} />
+                  </button>
+                </div>
               ))}
             </div>
 

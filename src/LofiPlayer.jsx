@@ -8,6 +8,7 @@ export default function LofiPlayer() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
   const [volume, setVolume] = useState(0.5);
+  const [timeLeft, setTimeLeft] = useState("0:00");
   const audioRef = useRef(null);
 
   const togglePlay = () => {
@@ -19,17 +20,26 @@ export default function LofiPlayer() {
 
   const nextTrack = () => {
     setCurrentTrack((prev) => (prev + 1) % tracks.length);
-    setIsPlaying(true); // autoplay
+    setIsPlaying(true);
   };
 
   const prevTrack = () => {
     setCurrentTrack((prev) => (prev - 1 + tracks.length) % tracks.length);
-    setIsPlaying(true); // autoplay
+    setIsPlaying(true);
   };
 
   const handleTimeUpdate = () => {
     if (!audioRef.current) return;
-    setProgress(audioRef.current.currentTime / audioRef.current.duration);
+    const current = audioRef.current.currentTime;
+    const duration = audioRef.current.duration || 0;
+    setProgress(current / duration);
+
+    const remaining = duration - current;
+    const minutes = Math.floor(remaining / 60);
+    const seconds = Math.floor(remaining % 60)
+      .toString()
+      .padStart(2, "0");
+    setTimeLeft(`${minutes}:${seconds}`);
   };
 
   const handleProgressChange = (e) => {
@@ -49,51 +59,32 @@ export default function LofiPlayer() {
     if (!audioRef.current) return;
     audioRef.current.volume = volume;
     if (isPlaying) {
-      audioRef.current
-        .play()
-        .catch(() => { }); // suppress promise error if autoplay blocked
+      audioRef.current.play().catch(() => { }); // suppress autoplay errors
     }
   }, [currentTrack, isPlaying, volume]);
 
   return (
     <div className="fixed bottom-5 left-5 sm:w-100 w-[calc(100vw-2.5rem)] backdrop-blur-md rounded-xl p-4 flex items-center shadow-lg flex-col gap-4 bg-base-200 text-base-content">
       <div className="flex justify-between w-full gap-10 items-center">
-        {/* Audio Element */}
         <audio
           className="hidden"
           ref={audioRef}
           src={`/music/${tracks[currentTrack]}.mp3`}
           onTimeUpdate={handleTimeUpdate}
-          onEnded={nextTrack} // autoplay next track when finished
+          onEnded={nextTrack}
         />
 
         {/* Controls */}
         <div className="flex items-center space-x-2 text-gray-100">
-          {/* PREVIOUS */}
-          <button
-            onClick={prevTrack}
-            className="btn btn-primary btn-circle btn-sm"
-          >
-            <SkipBack fill="white" storke="white" size={16} />
+          <button onClick={prevTrack} className="btn btn-primary btn-circle btn-sm">
+            <SkipBack fill="white" stroke="white" size={16} />
           </button>
 
-          {/* PLAY / PAUSE */}
-          <button
-            onClick={togglePlay}
-            className="btn btn-primary btn-circle btn-sm"
-          >
-            {isPlaying ? (
-              <Pause fill="white" stroke="white" size={16} />
-            ) : (
-              <Play fill="white" stroke="white" size={16} />
-            )}
+          <button onClick={togglePlay} className="btn btn-primary btn-circle btn-sm">
+            {isPlaying ? <Pause fill="white" stroke="white" size={16} /> : <Play fill="white" stroke="white" size={16} />}
           </button>
 
-          {/* NEXT */}
-          <button
-            onClick={nextTrack}
-            className="btn btn-primary btn-circle btn-sm"
-          >
+          <button onClick={nextTrack} className="btn btn-primary btn-circle btn-sm">
             <SkipForward fill="white" stroke="white" size={16} />
           </button>
         </div>
@@ -113,18 +104,24 @@ export default function LofiPlayer() {
         </div>
       </div>
 
-      {/* Progress */}
-      <div className="flex items-center w-full space-x-3">
-        <Music />
-        <input
-          type="range"
-          min={0}
-          max={1}
-          step={0.001}
-          value={progress}
-          onChange={handleProgressChange}
-          className="range range-sm range-primary w-full"
-        />
+      <div className="grid grid-cols-[auto_1fr_auto] items-center w-full gap-3">
+        <div>
+          <Music />
+        </div>
+        <div>
+          <input
+            type="range"
+            min={0}
+            max={1}
+            step={0.001}
+            value={progress}
+            onChange={handleProgressChange}
+            className="range range-xs range-primary w-full"
+          />
+        </div>
+        <div>
+          <span className="text-sm">{timeLeft}</span>
+        </div>
       </div>
     </div>
   );
