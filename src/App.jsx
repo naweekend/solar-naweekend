@@ -112,6 +112,7 @@ export default function App() {
   const saturnRef = useRef();
   const uranusRef = useRef();
   const neptuneRef = useRef();
+  const plutoRef = useRef();
 
   return (
     <>
@@ -152,6 +153,7 @@ export default function App() {
                 { name: 'saturn', ref: saturnRef },
                 { name: 'uranus', ref: uranusRef },
                 { name: 'neptune', ref: neptuneRef },
+                { name: 'pluto', ref: plutoRef },
               ].map((planet) => (
                 <div className="tooltip" data-tip={planet.name.charAt(0).toUpperCase() + planet.name.slice(1)}>
                   <button
@@ -230,6 +232,15 @@ export default function App() {
           <Saturn showOrbit={showOrbits} ref={saturnRef} />
           <Planet texturePath="/uranus.jpg" size={2} distance={48} orbitSpeed={0.05} spinSpeed={0.012} showOrbit={showOrbits} ref={uranusRef} />
           <Planet texturePath="/neptune.jpg" size={2} distance={58} orbitSpeed={0.03} spinSpeed={0.01} showOrbit={showOrbits} ref={neptuneRef} />
+          <Planet
+            texturePath="/pluto.jpg"
+            size={0.7}
+            distance={70}
+            orbitSpeed={0.1}
+            spinSpeed={0.008}
+            showOrbit={showOrbits}
+            ref={plutoRef}
+          />
 
           <CameraFollow targetRef={followTarget} cameraRef={cameraRef} follow={!!followTarget} zoomOut={zoomOut} setZoomOut={setZoomOut} />
           <OrbitControls enableDamping enablePan minDistance={20} maxDistance={300} />
