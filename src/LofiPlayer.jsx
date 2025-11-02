@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Play, Pause, SkipBack, SkipForward, Volume2, Music } from "lucide-react";
+import { Play, Pause, SkipBack, SkipForward, Volume2 } from "lucide-react";
 
 const tracks = ["lofi-1", "lofi-2", "lofi-3"]; // mp3 in /public/music
 
@@ -10,6 +10,7 @@ export default function LofiPlayer() {
   const [volume, setVolume] = useState(0.5);
   const [timeLeft, setTimeLeft] = useState("0:00");
   const audioRef = useRef(null);
+  const discRef = useRef(null);
 
   const togglePlay = () => {
     if (!audioRef.current) return;
@@ -54,6 +55,22 @@ export default function LofiPlayer() {
     setVolume(newVolume);
     if (audioRef.current) audioRef.current.volume = newVolume;
   };
+
+  // Spin disc effect
+  useEffect(() => {
+    let animationFrame;
+    const spin = () => {
+      if (discRef.current && isPlaying) {
+        const currentRotation = parseFloat(discRef.current.dataset.rotation || "0");
+        const newRotation = currentRotation + 0.3; // adjust speed here
+        discRef.current.style.transform = `rotate(${newRotation}deg)`;
+        discRef.current.dataset.rotation = newRotation;
+      }
+      animationFrame = requestAnimationFrame(spin);
+    };
+    spin();
+    return () => cancelAnimationFrame(animationFrame);
+  }, [isPlaying]);
 
   useEffect(() => {
     if (!audioRef.current) return;
@@ -106,7 +123,15 @@ export default function LofiPlayer() {
 
       <div className="grid grid-cols-[auto_1fr_auto] items-center w-full gap-3">
         <div>
-          <Music />
+          <img
+            ref={discRef}
+            width={30}
+            height={30}
+            src="/disc.png"
+            alt="disc"
+            data-rotation="0"
+            className="transition-transform duration-100 ease-linear"
+          />
         </div>
         <div>
           <input
