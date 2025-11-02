@@ -7,6 +7,7 @@ import EarthAndMoon from './EarthAndMoon';
 import Orbit from './Orbit';
 import Planet from './Planet';
 import { StopCircleIcon } from 'lucide-react';
+import toast, { Toaster } from 'react-hot-toast';
 
 // 🌌 Space background
 function Background() {
@@ -104,86 +105,105 @@ export default function App() {
   const neptuneRef = useRef();
 
   return (
-    <div className="w-screen h-screen bg-black relative">
-      {/* Floating Top Panel */}
-      <div className="absolute top-5 left-5 sm:w-100 w-[calc(100vw-2.5rem)] z-20 flex flex-col gap-3 bg-[#191E24]/90 backdrop-blur-md p-4 rounded-xl shadow-lg text-white">
-        {/* Show Orbits */}
-        <div className="flex items-center justify-between">
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              className="checkbox checkbox-xs checkbox-primary"
-              checked={showOrbits}
-              onChange={() => setShowOrbits(!showOrbits)}
-            />
-            Show Orbits
-          </label>
-        </div>
+    <>
+      <Toaster />
+      <div className="w-screen h-screen bg-black relative">
+        {/* Floating Top Panel */}
+        <div className="absolute top-5 left-5 sm:w-100 w-[calc(100vw-2.5rem)] z-20 flex flex-col gap-3 bg-base-200 backdrop-blur-md p-4 rounded-xl shadow-lg text-base-content">
+          {/* Heading */}
+          <h2 className="text-xs font-semibold opacity-80 -mb-1 uppercase">CLICK A PLANET TO FOLLOW IT</h2>
 
-        {/* Heading */}
-        <h2 className="text-xs font-semibold text-gray-300 -mb-1 uppercase">CLICK A PLANET TO FOLLOW IT</h2>
+          {/* Planet Buttons */}
+          <div className="flex flex-wrap gap-1">
+            {[
+              { name: 'mercury', ref: mercuryRef },
+              { name: 'venus', ref: venusRef },
+              { name: 'earth', ref: earthRef },
+              { name: 'mars', ref: marsRef },
+              { name: 'jupiter', ref: jupiterRef },
+              { name: 'saturn', ref: saturnRef },
+              { name: 'uranus', ref: uranusRef },
+              { name: 'neptune', ref: neptuneRef },
+            ].map((planet) => (
+              <button
+                key={planet.name}
+                className="btn hover:bg-neutral btn-base-300 active:scale-95 transition-all duration-250 btn-xs btn-square flex items-center justify-center"
+                onClick={() => {
+                  setFollowTarget(planet.ref);
+                  toast.success(`Following ${planet.name.charAt(0).toUpperCase() + planet.name.slice(1)}`);
+                  setZoomOut(false);
+                }}
+              >
+                <img src={`/planets/${planet.name}.png`} alt={planet.name} width={30} height={30} />
+              </button>
+            ))}
 
-        {/* Planet Buttons */}
-        <div className="flex flex-wrap gap-1">
-          {[
-            { name: 'Mercury', ref: mercuryRef },
-            { name: 'Venus', ref: venusRef },
-            { name: 'Earth', ref: earthRef },
-            { name: 'Mars', ref: marsRef },
-            { name: 'Jupiter', ref: jupiterRef },
-            { name: 'Saturn', ref: saturnRef },
-            { name: 'Uranus', ref: uranusRef },
-            { name: 'Neptune', ref: neptuneRef },
-          ].map((planet) => (
+            {/* Stop Following */}
             <button
-              key={planet.name}
-              className="btn btn-xs btn-accent w-[60px] flex items-center justify-center"
+              className="btn btn-xs btn-error flex items-center justify-center gap-1"
               onClick={() => {
-                setFollowTarget(planet.ref);
-                setZoomOut(false);
+                setFollowTarget(null);
+                toast.success('Stopped Following');
+                setZoomOut(true);
               }}
             >
-              {planet.name}
+              <StopCircleIcon size={13} /> Stop Following
             </button>
-          ))}
+          </div>
 
-          {/* Stop Following */}
-          <button
-            className="btn btn-xs btn-error w-[125px] flex items-center justify-center gap-1"
-            onClick={() => {
-              setFollowTarget(null);
-              setZoomOut(true);
-            }}
-          >
-            <StopCircleIcon size={13} /> Stop Following
-          </button>
+
+          <h2 className='text-xs font-semibold opacity-80 -mb-1 uppercase mt-2'>SETTINGS</h2>
+          {/* Show Orbits */}
+          <div className="flex items-center justify-between">
+            <label className="flex items-center gap-2 w-full justify-between text-sm cursor-pointer">
+              <span>Show Orbits</span>
+              <input
+                type="checkbox"
+                className="toggle toggle-primary toggle-xs"
+                checked={showOrbits}
+                onChange={() => setShowOrbits(!showOrbits)}
+              />
+            </label>
+          </div>
+
+          {/* Theme Change */}
+          <div className="flex items-center justify-between -mt-1">
+            <label className="flex items-center gap-2 w-full justify-between text-sm cursor-pointer">
+              <span>Light Mode</span>
+              <input
+                type="checkbox"
+                className="toggle toggle-primary toggle-xs theme-controller"
+                value="autumn"
+              />
+            </label>
+          </div>
         </div>
+        {/* Floating Top Panel END */}
+
+        <Canvas
+          camera={{ position: [0, 40, 80], fov: 60 }}
+          onCreated={({ camera }) => (cameraRef.current = camera)}
+        >
+          <color attach="background" args={[0x000000]} />
+          <Background />
+          <ambientLight intensity={0.4} color={0x222233} />
+          <Sun />
+
+          <Planet texturePath="/mercury.jpg" size={0.5} distance={8} orbitSpeed={0.6} spinSpeed={0.01} showOrbit={showOrbits} ref={mercuryRef} />
+          <Planet texturePath="/venus.jpg" size={1} distance={12} orbitSpeed={0.5} spinSpeed={0.008} showOrbit={showOrbits} ref={venusRef} />
+          <EarthAndMoon showOrbit={showOrbits} ref={earthRef} />
+          <Planet texturePath="/mars.jpg" size={0.8} distance={20} orbitSpeed={0.18} spinSpeed={0.015} showOrbit={showOrbits} ref={marsRef} />
+          <Planet texturePath="/jupiter.jpg" size={3} distance={28} orbitSpeed={0.1} spinSpeed={0.02} showOrbit={showOrbits} ref={jupiterRef} />
+          <Saturn showOrbit={showOrbits} ref={saturnRef} />
+          <Planet texturePath="/uranus.jpg" size={2} distance={48} orbitSpeed={0.05} spinSpeed={0.012} showOrbit={showOrbits} ref={uranusRef} />
+          <Planet texturePath="/neptune.jpg" size={2} distance={58} orbitSpeed={0.03} spinSpeed={0.01} showOrbit={showOrbits} ref={neptuneRef} />
+
+          <CameraFollow targetRef={followTarget} cameraRef={cameraRef} follow={!!followTarget} zoomOut={zoomOut} setZoomOut={setZoomOut} />
+          <OrbitControls enableDamping enablePan minDistance={20} maxDistance={300} />
+        </Canvas>
+
+        <LofiPlayer />
       </div>
-      {/* Floating Top Panel END */}
-
-      <Canvas
-        camera={{ position: [0, 40, 80], fov: 60 }}
-        onCreated={({ camera }) => (cameraRef.current = camera)}
-      >
-        <color attach="background" args={[0x000000]} />
-        <Background />
-        <ambientLight intensity={0.4} color={0x222233} />
-        <Sun />
-
-        <Planet texturePath="/mercury.jpg" size={0.5} distance={8} orbitSpeed={0.6} spinSpeed={0.01} showOrbit={showOrbits} ref={mercuryRef} />
-        <Planet texturePath="/venus.jpg" size={1} distance={12} orbitSpeed={0.5} spinSpeed={0.008} showOrbit={showOrbits} ref={venusRef} />
-        <EarthAndMoon showOrbit={showOrbits} ref={earthRef} />
-        <Planet texturePath="/mars.jpg" size={0.8} distance={20} orbitSpeed={0.18} spinSpeed={0.015} showOrbit={showOrbits} ref={marsRef} />
-        <Planet texturePath="/jupiter.jpg" size={3} distance={28} orbitSpeed={0.1} spinSpeed={0.02} showOrbit={showOrbits} ref={jupiterRef} />
-        <Saturn showOrbit={showOrbits} ref={saturnRef} />
-        <Planet texturePath="/uranus.jpg" size={2} distance={48} orbitSpeed={0.05} spinSpeed={0.012} showOrbit={showOrbits} ref={uranusRef} />
-        <Planet texturePath="/neptune.jpg" size={2} distance={58} orbitSpeed={0.03} spinSpeed={0.01} showOrbit={showOrbits} ref={neptuneRef} />
-
-        <CameraFollow targetRef={followTarget} cameraRef={cameraRef} follow={!!followTarget} zoomOut={zoomOut} setZoomOut={setZoomOut} />
-        <OrbitControls enableDamping enablePan minDistance={20} maxDistance={300} />
-      </Canvas>
-
-      <LofiPlayer />
-    </div>
+    </>
   );
 }

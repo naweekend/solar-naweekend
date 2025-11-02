@@ -56,7 +56,7 @@ export default function LofiPlayer() {
   }, [currentTrack, isPlaying, volume]);
 
   return (
-    <div className="fixed bottom-5 left-5 sm:w-100 w-[calc(100vw-2.5rem)] backdrop-blur-md rounded-xl p-4 flex items-center shadow-lg flex-col gap-4 bg-[#191E24]">
+    <div className="fixed bottom-5 left-5 sm:w-100 w-[calc(100vw-2.5rem)] backdrop-blur-md rounded-xl p-4 flex items-center shadow-lg flex-col gap-4 bg-base-200 text-base-content">
       <div className="flex justify-between w-full gap-10 items-center">
         {/* Audio Element */}
         <audio
@@ -74,7 +74,7 @@ export default function LofiPlayer() {
             onClick={prevTrack}
             className="btn btn-primary btn-circle btn-sm"
           >
-            <SkipBack fill="white" size={16} />
+            <SkipBack fill="white" storke="white" size={16} />
           </button>
 
           {/* PLAY / PAUSE */}
@@ -83,9 +83,9 @@ export default function LofiPlayer() {
             className="btn btn-primary btn-circle btn-sm"
           >
             {isPlaying ? (
-              <Pause fill="white" size={16} />
+              <Pause fill="white" stroke="white" size={16} />
             ) : (
-              <Play fill="white" size={16} />
+              <Play fill="white" stroke="white" size={16} />
             )}
           </button>
 
@@ -94,13 +94,13 @@ export default function LofiPlayer() {
             onClick={nextTrack}
             className="btn btn-primary btn-circle btn-sm"
           >
-            <SkipForward fill="white" size={16} />
+            <SkipForward fill="white" stroke="white" size={16} />
           </button>
         </div>
 
         {/* Volume */}
         <div className="flex items-center space-x-3">
-          <Volume2 size={18} className="text-gray-200" />
+          <Volume2 size={18} />
           <input
             type="range"
             min={0}
