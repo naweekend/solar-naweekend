@@ -220,7 +220,7 @@ export default function App() {
                 checked={rotateSystem}
                 onChange={() => {
                   setRotateSystem(!rotateSystem);
-                  toast.success(!rotateSystem ? "System rotation enabled" : "System rotation stopped");
+                  toast.success(!rotateSystem ? "Auto Rotation Enabled" : "Auto Rotation Disabled");
                 }}
               />
             </label>
