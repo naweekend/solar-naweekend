@@ -10,15 +10,16 @@ export default function LofiPlayer() {
   const [progress, setProgress] = useState(0);
   const [volume, setVolume] = useState(0.5);
   const [timeLeft, setTimeLeft] = useState("0:00");
+
   const audioRef = useRef(null);
-  const discRef = useRef(null);
+  const isSeeking = useRef(false);
 
   const tracks = [1, 2, 3].map((n) => `${musicType}-${n}`);
 
   const togglePlay = () => {
     if (!audioRef.current) return;
     if (isPlaying) audioRef.current.pause();
-    else audioRef.current.play();
+    else audioRef.current.play().catch(() => { });
     setIsPlaying(!isPlaying);
   };
 
@@ -33,11 +34,10 @@ export default function LofiPlayer() {
   };
 
   const handleTimeUpdate = () => {
-    if (!audioRef.current) return;
+    if (!audioRef.current || isSeeking.current) return;
     const current = audioRef.current.currentTime;
     const duration = audioRef.current.duration;
 
-    // Prevent NaN values from breaking progress
     if (!duration || isNaN(duration)) {
       setProgress(0);
       setTimeLeft("0:00");
@@ -54,10 +54,28 @@ export default function LofiPlayer() {
     setTimeLeft(`${minutes}:${seconds}`);
   };
 
+  const handleProgressMouseDown = () => {
+    isSeeking.current = true;
+  };
+
+  const handleProgressMouseUp = (e) => {
+    if (!audioRef.current) return;
+    const newProgress = parseFloat(e.target.value);
+    const newTime = newProgress * audioRef.current.duration;
+
+    audioRef.current.currentTime = newTime;
+    setProgress(newProgress);
+    isSeeking.current = false;
+
+    // Resume playback only if it was already playing
+    if (isPlaying) {
+      audioRef.current.play().catch(() => { });
+    }
+  };
+
   const handleProgressChange = (e) => {
     if (!audioRef.current) return;
     const newProgress = parseFloat(e.target.value);
-    audioRef.current.currentTime = newProgress * audioRef.current.duration;
     setProgress(newProgress);
   };
 
@@ -73,33 +91,14 @@ export default function LofiPlayer() {
     setIsPlaying(true);
   };
 
-  // Spin disc effect (optional)
-  useEffect(() => {
-    let animationFrame;
-    const spin = () => {
-      if (discRef.current && isPlaying) {
-        const currentRotation = parseFloat(discRef.current.dataset.rotation || "0");
-        const newRotation = currentRotation + 0.3;
-        discRef.current.style.transform = `rotate(${newRotation}deg)`;
-        discRef.current.dataset.rotation = newRotation;
-      }
-      animationFrame = requestAnimationFrame(spin);
-    };
-    spin();
-    return () => cancelAnimationFrame(animationFrame);
-  }, [isPlaying]);
-
-  // Handle playback and track changes properly
+  // Load new track when track/type changes
   useEffect(() => {
     if (!audioRef.current) return;
-
     const audio = audioRef.current;
     audio.volume = volume;
 
     const handleCanPlay = () => {
-      if (isPlaying) {
-        audio.play().catch(() => { });
-      }
+      if (isPlaying) audio.play().catch(() => { });
     };
 
     audio.addEventListener("canplay", handleCanPlay);
@@ -108,7 +107,24 @@ export default function LofiPlayer() {
     return () => {
       audio.removeEventListener("canplay", handleCanPlay);
     };
-  }, [musicType, currentTrack, isPlaying, volume]);
+  }, [musicType, currentTrack]);
+
+  // Handle play/pause separately
+  useEffect(() => {
+    if (!audioRef.current) return;
+    if (isPlaying) {
+      audioRef.current.play().catch(() => { });
+    } else {
+      audioRef.current.pause();
+    }
+  }, [isPlaying]);
+
+  // Handle volume separately
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.volume = volume;
+    }
+  }, [volume]);
 
   return (
     <div className="fixed bottom-5 left-5 sm:w-96 w-[calc(100vw-2.5rem)] backdrop-blur-md rounded-xl p-4 flex flex-col gap-3 shadow-lg bg-base-200 text-base-content">
@@ -148,12 +164,14 @@ export default function LofiPlayer() {
         step={0.001}
         value={progress || 0}
         onChange={handleProgressChange}
+        onMouseDown={handleProgressMouseDown}
+        onMouseUp={handleProgressMouseUp}
         className="range range-xs range-primary w-full"
       />
 
       {/* Bottom Controls */}
       <div className="flex justify-between items-center w-full">
-        {/* Left: Controls */}
+        {/* Left Controls */}
         <div className="flex items-center space-x-2">
           <button onClick={prevTrack} className="btn btn-ghost btn-circle btn-sm">
             <SkipBack fill="currentColor" stroke="currentColor" size={16} />
