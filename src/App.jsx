@@ -3,6 +3,17 @@ import { OrbitControls } from '@react-three/drei';
 import { useRef } from 'react';
 import * as THREE from 'three';
 
+function Background() {
+  const texture = useLoader(THREE.TextureLoader, '/space.jpg');
+  return (
+    <mesh scale={[-1, 1, 1]}>
+      {/* A giant sphere turned inside out */}
+      <sphereGeometry args={[200, 64, 64]} />
+      <meshBasicMaterial map={texture} side={THREE.BackSide} />
+    </mesh>
+  );
+}
+
 function Sun() {
   const sunRef = useRef();
   const sunTexture = useLoader(THREE.TextureLoader, '/sun.jpg');
@@ -62,7 +73,9 @@ export default function App() {
   return (
     <div style={{ width: '100vw', height: '100vh', backgroundColor: 'black' }}>
       <Canvas camera={{ position: [0, 15, 35], fov: 60 }}>
-        <color attach="background" args={[0x000010]} />
+        {/* Background space texture */}
+        <Background />
+
         <ambientLight intensity={0.4} color={0x222233} />
         <Sun />
         <EarthAndMoon />
