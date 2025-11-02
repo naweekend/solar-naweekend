@@ -6,7 +6,7 @@ import LofiPlayer from './LofiPlayer';
 import EarthAndMoon from './EarthAndMoon';
 import Orbit from './Orbit';
 import Planet from './Planet';
-import { StopCircle, StopCircleIcon } from 'lucide-react';
+import { StopCircleIcon } from 'lucide-react';
 
 // 🌌 Space background
 function Background() {
@@ -50,7 +50,7 @@ function Saturn({ showOrbit, ref }) {
       orbitSpeed={0.08}
       spinSpeed={0.018}
       showOrbit={showOrbit}
-      ref={ref} // pass ref here
+      ref={ref}
     >
       <mesh rotation={[Math.PI / 2, 0, 0]}>
         <ringGeometry args={[3, 5, 128]} />
@@ -60,9 +60,8 @@ function Saturn({ showOrbit, ref }) {
   );
 }
 
-
-// Camera follow
-function CameraFollow({ targetRef, cameraRef, follow }) {
+// Camera follow & smooth zoom out
+function CameraFollow({ targetRef, cameraRef, follow, zoomOut, setZoomOut }) {
   const defaultPos = new THREE.Vector3(0, 40, 80);
   const defaultLookAt = new THREE.Vector3(0, 0, 0);
 
@@ -74,24 +73,25 @@ function CameraFollow({ targetRef, cameraRef, follow }) {
       const pos = new THREE.Vector3();
       targetRef.current.getWorldPosition(pos);
 
-      cameraRef.current.position.lerp(
-        new THREE.Vector3(pos.x + 10, pos.y + 5, pos.z + 10),
-        0.05
-      );
+      cameraRef.current.position.lerp(new THREE.Vector3(pos.x + 10, pos.y + 5, pos.z + 10), 0.05);
       cameraRef.current.lookAt(pos);
-    } else {
-      // Smoothly zoom out to default view
+    } else if (zoomOut) {
+      // Smooth zoom-out
       cameraRef.current.position.lerp(defaultPos, 0.05);
       cameraRef.current.lookAt(defaultLookAt);
-    }
-  });
 
-  return null;
+      if (cameraRef.current.position.distanceTo(defaultPos) < 0.1) {
+        setZoomOut(false);
+      }
+    }
+    // ELSE do nothing, OrbitControls is free
+  });
 }
 
 export default function App() {
   const [showOrbits, setShowOrbits] = useState(true);
   const [followTarget, setFollowTarget] = useState(null);
+  const [zoomOut, setZoomOut] = useState(false);
 
   const cameraRef = useRef();
   const earthRef = useRef();
@@ -107,7 +107,7 @@ export default function App() {
     <div className="w-screen h-screen bg-black relative">
       {/* Floating Top Panel */}
       <div className="absolute top-5 left-5 sm:w-100 w-[calc(100vw-2.5rem)] z-20 flex flex-col gap-3 bg-[#191E24]/90 backdrop-blur-md p-4 rounded-xl shadow-lg text-white">
-        {/* Top Row: Show Orbits + Stop Button */}
+        {/* Show Orbits */}
         <div className="flex items-center justify-between">
           <label className="flex items-center gap-2 text-sm">
             <input
@@ -120,7 +120,7 @@ export default function App() {
           </label>
         </div>
 
-        {/* Optional Heading */}
+        {/* Heading */}
         <h2 className="text-xs font-semibold text-gray-300 -mb-1 uppercase">CLICK A PLANET TO FOLLOW IT</h2>
 
         {/* Planet Buttons */}
@@ -134,19 +134,29 @@ export default function App() {
             { name: 'Saturn', ref: saturnRef },
             { name: 'Uranus', ref: uranusRef },
             { name: 'Neptune', ref: neptuneRef },
-            { name: "Stop Following", ref: null },
           ].map((planet) => (
             <button
               key={planet.name}
-              className={`btn btn-xs btn-accent w-[60px] ${planet.name === 'Stop Following' ? 'w-[125px] btn-error' : ''} flex items-center justify-center`}
-              onClick={() => setFollowTarget(planet.ref)}
+              className="btn btn-xs btn-accent w-[60px] flex items-center justify-center"
+              onClick={() => {
+                setFollowTarget(planet.ref);
+                setZoomOut(false);
+              }}
             >
-              <span className={`${planet.name === 'Stop Following' ? '' : 'hidden'}`}>
-                <StopCircleIcon size={13} />
-              </span>
               {planet.name}
             </button>
           ))}
+
+          {/* Stop Following */}
+          <button
+            className="btn btn-xs btn-error w-[125px] flex items-center justify-center gap-1"
+            onClick={() => {
+              setFollowTarget(null);
+              setZoomOut(true);
+            }}
+          >
+            <StopCircleIcon size={13} /> Stop Following
+          </button>
         </div>
       </div>
       {/* Floating Top Panel END */}
@@ -169,8 +179,7 @@ export default function App() {
         <Planet texturePath="/uranus.jpg" size={2} distance={48} orbitSpeed={0.05} spinSpeed={0.012} showOrbit={showOrbits} ref={uranusRef} />
         <Planet texturePath="/neptune.jpg" size={2} distance={58} orbitSpeed={0.03} spinSpeed={0.01} showOrbit={showOrbits} ref={neptuneRef} />
 
-
-        <CameraFollow targetRef={followTarget} cameraRef={cameraRef} follow={!!followTarget} />
+        <CameraFollow targetRef={followTarget} cameraRef={cameraRef} follow={!!followTarget} zoomOut={zoomOut} setZoomOut={setZoomOut} />
         <OrbitControls enableDamping enablePan minDistance={20} maxDistance={300} />
       </Canvas>
 
