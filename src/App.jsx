@@ -114,43 +114,47 @@ export default function App() {
           <h2 className="text-xs font-semibold opacity-80 -mb-1 uppercase">CLICK A PLANET TO FOLLOW IT</h2>
 
           {/* Planet Buttons */}
-          <div className="flex flex-wrap gap-1">
-            {[
-              { name: 'mercury', ref: mercuryRef },
-              { name: 'venus', ref: venusRef },
-              { name: 'earth', ref: earthRef },
-              { name: 'mars', ref: marsRef },
-              { name: 'jupiter', ref: jupiterRef },
-              { name: 'saturn', ref: saturnRef },
-              { name: 'uranus', ref: uranusRef },
-              { name: 'neptune', ref: neptuneRef },
-            ].map((planet) => (
-              <button
-                key={planet.name}
-                className="btn hover:bg-neutral btn-base-300 active:scale-95 transition-all duration-250 btn-xs btn-square flex items-center justify-center"
-                onClick={() => {
-                  setFollowTarget(planet.ref);
-                  toast.success(`Following ${planet.name.charAt(0).toUpperCase() + planet.name.slice(1)}`);
-                  setZoomOut(false);
-                }}
-              >
-                <img src={`/planets/${planet.name}.png`} alt={planet.name} width={30} height={30} />
-              </button>
-            ))}
+          <div className="flex flex-wrap gap-1 justify-between">
+            <div className='flex flex-wrap gap-1'>
+              {[
+                { name: 'mercury', ref: mercuryRef },
+                { name: 'venus', ref: venusRef },
+                { name: 'earth', ref: earthRef },
+                { name: 'mars', ref: marsRef },
+                { name: 'jupiter', ref: jupiterRef },
+                { name: 'saturn', ref: saturnRef },
+                { name: 'uranus', ref: uranusRef },
+                { name: 'neptune', ref: neptuneRef },
+              ].map((planet) => (
+                <button
+                  key={planet.name}
+                  className="btn hover:bg-neutral btn-base-300 active:scale-95 transition-all duration-250 btn-xs btn-square flex items-center justify-center"
+                  onClick={() => {
+                    setFollowTarget(planet.ref);
+                    toast.success(`Following ${planet.name.charAt(0).toUpperCase() + planet.name.slice(1)}`);
+                    setZoomOut(false);
+                  }}
+                >
+                  <img src={`/planets/${planet.name}.png`} alt={planet.name} width={30} height={30} />
+                </button>
+              ))}
+            </div>
 
-            {/* Stop Following */}
-            <button
-              className="btn btn-xs btn-error flex items-center justify-center gap-1"
-              onClick={() => {
-                setFollowTarget(null);
-                toast.success('Stopped Following');
-                setZoomOut(true);
-              }}
-            >
-              <StopCircleIcon size={13} /> Stop Following
-            </button>
+            <div>
+              {followTarget && (
+                <button
+                  className="btn btn-xs btn-error flex items-center justify-center gap-1"
+                  onClick={() => {
+                    setFollowTarget(null);
+                    toast.success('Stopped Following');
+                    setZoomOut(true);
+                  }}
+                >
+                  <StopCircleIcon size={13} /> Stop
+                </button>
+              )}
+            </div>
           </div>
-
 
           <h2 className='text-xs font-semibold opacity-80 -mb-1 uppercase mt-2'>SETTINGS</h2>
           {/* Show Orbits */}
@@ -203,7 +207,7 @@ export default function App() {
         </Canvas>
 
         <LofiPlayer />
-      </div>
+      </div >
     </>
   );
 }
