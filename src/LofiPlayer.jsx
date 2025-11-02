@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Play, Pause, SkipBack, SkipForward, Volume2, Music } from "lucide-react";
 
-const tracks = ["lofi-1", "lofi-2"]; // mp3 in /public/music
+const tracks = ["lofi-1", "lofi-2", "lofi-3"]; // mp3 in /public/music
 
 export default function LofiPlayer() {
   const [currentTrack, setCurrentTrack] = useState(0);
