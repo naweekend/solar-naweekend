@@ -114,7 +114,7 @@ export default function App() {
           <div className='flex justify-between items-center gap-5'>
             <h2 className="text-xs font-semibold opacity-80 -mb-1 uppercase">CLICK A PLANET TO FOLLOW IT</h2>
             {/* HELP  */}
-            <button className="group-hover:inline-flex hidden -mb-1 py-0 p-0 opacity-70" onClick={() => document.getElementById('my_modal_2').showModal()}><HelpCircle size={15} /></button>
+            <button className="max-md:inline-flex group-hover:inline-flex hidden -mb-1 py-0 p-0 opacity-70" onClick={() => document.getElementById('my_modal_2').showModal()}><HelpCircle size={15} /></button>
             <dialog id="my_modal_2" className="modal">
               <div className="modal-box">
                 <h3 className="font-bold text-lg">Welcome to the Solar System Simulator</h3>
