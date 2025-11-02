@@ -13,40 +13,46 @@ export default function LofiPlayer() {
 
   const audioRef = useRef(null);
   const isSeeking = useRef(false);
+  const wasPlayingBeforeSeek = useRef(false);
 
   const tracks = [1, 2, 3].map((n) => `${musicType}-${n}`);
 
-  const togglePlay = () => {
-    if (!audioRef.current) return;
-    if (isPlaying) audioRef.current.pause();
-    else audioRef.current.play().catch(() => { });
-    setIsPlaying(!isPlaying);
+  const togglePlay = async () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    try {
+      if (audio.paused) {
+        await audio.play();
+        setIsPlaying(true);
+      } else {
+        audio.pause();
+        setIsPlaying(false);
+      }
+    } catch (err) {
+      console.warn("Playback blocked:", err);
+    }
   };
 
   const nextTrack = () => {
     setCurrentTrack((prev) => (prev + 1) % tracks.length);
-    setIsPlaying(true);
   };
 
   const prevTrack = () => {
     setCurrentTrack((prev) => (prev - 1 + tracks.length) % tracks.length);
-    setIsPlaying(true);
   };
 
   const handleTimeUpdate = () => {
-    if (!audioRef.current || isSeeking.current) return;
-    const current = audioRef.current.currentTime;
-    const duration = audioRef.current.duration;
+    const audio = audioRef.current;
+    if (!audio || isSeeking.current) return;
 
-    if (!duration || isNaN(duration)) {
-      setProgress(0);
-      setTimeLeft("0:00");
-      return;
-    }
+    const current = audio.currentTime;
+    const duration = audio.duration;
+    if (!duration || isNaN(duration)) return;
 
     setProgress(current / duration);
 
-    const remaining = duration - current;
+    const remaining = Math.max(duration - current, 0);
     const minutes = Math.floor(remaining / 60);
     const seconds = Math.floor(remaining % 60)
       .toString()
@@ -54,29 +60,25 @@ export default function LofiPlayer() {
     setTimeLeft(`${minutes}:${seconds}`);
   };
 
-  const handleProgressMouseDown = () => {
+  const handleSeekStart = () => {
+    if (!audioRef.current) return;
     isSeeking.current = true;
+    wasPlayingBeforeSeek.current = !audioRef.current.paused;
+    audioRef.current.pause();
   };
 
-  const handleProgressMouseUp = (e) => {
-    if (!audioRef.current) return;
+  const handleSeekEnd = (e) => {
+    const audio = audioRef.current;
+    if (!audio) return;
     const newProgress = parseFloat(e.target.value);
-    const newTime = newProgress * audioRef.current.duration;
-
-    audioRef.current.currentTime = newTime;
+    audio.currentTime = newProgress * audio.duration;
     setProgress(newProgress);
     isSeeking.current = false;
-
-    // Resume playback only if it was already playing
-    if (isPlaying) {
-      audioRef.current.play().catch(() => { });
-    }
+    if (wasPlayingBeforeSeek.current) audio.play().catch(() => { });
   };
 
-  const handleProgressChange = (e) => {
-    if (!audioRef.current) return;
-    const newProgress = parseFloat(e.target.value);
-    setProgress(newProgress);
+  const handleSeekChange = (e) => {
+    setProgress(parseFloat(e.target.value));
   };
 
   const handleVolumeChange = (e) => {
@@ -88,56 +90,57 @@ export default function LofiPlayer() {
   const handleMusicTypeChange = (e) => {
     setMusicType(e.target.value);
     setCurrentTrack(0);
-    setIsPlaying(true);
   };
 
-  // Load new track when track/type changes
+  // When track/type changes, load and play if already playing
   useEffect(() => {
-    if (!audioRef.current) return;
     const audio = audioRef.current;
-    audio.volume = volume;
+    if (!audio) return;
 
-    const handleCanPlay = () => {
-      if (isPlaying) audio.play().catch(() => { });
+    audio.pause();
+    audio.load();
+    setProgress(0);
+    setTimeLeft("0:00");
+
+    const handleCanPlay = async () => {
+      if (isPlaying) {
+        try {
+          await audio.play();
+        } catch (err) {
+          console.warn("Autoplay blocked:", err);
+        }
+      }
     };
 
-    audio.addEventListener("canplay", handleCanPlay);
-    audio.load();
-
+    audio.addEventListener("canplaythrough", handleCanPlay);
     return () => {
-      audio.removeEventListener("canplay", handleCanPlay);
+      audio.removeEventListener("canplaythrough", handleCanPlay);
     };
   }, [musicType, currentTrack]);
 
-  // Handle play/pause separately
+  // Sync play/pause with state
   useEffect(() => {
-    if (!audioRef.current) return;
-    if (isPlaying) {
-      audioRef.current.play().catch(() => { });
-    } else {
-      audioRef.current.pause();
-    }
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (isPlaying) audio.play().catch(() => { });
+    else audio.pause();
   }, [isPlaying]);
 
-  // Handle volume separately
+  // Sync volume
   useEffect(() => {
-    if (audioRef.current) {
-      audioRef.current.volume = volume;
-    }
+    if (audioRef.current) audioRef.current.volume = volume;
   }, [volume]);
 
   return (
     <div className="fixed bottom-5 left-5 sm:w-96 w-[calc(100vw-2.5rem)] backdrop-blur-md rounded-xl p-4 flex flex-col gap-3 shadow-lg bg-base-200 text-base-content">
-      {/* Audio */}
       <audio
-        className="hidden"
         ref={audioRef}
         src={`/music/${tracks[currentTrack]}.mp3`}
         onTimeUpdate={handleTimeUpdate}
         onEnded={nextTrack}
       />
 
-      {/* Top bar: Type + Timer */}
+      {/* Top Bar */}
       <div className="flex justify-between items-center w-full">
         <select
           className="select select-xs max-w-24 bg-base-200 px-0 border-0 outline-0 font-medium"
@@ -162,16 +165,17 @@ export default function LofiPlayer() {
         min={0}
         max={1}
         step={0.001}
-        value={progress || 0}
-        onChange={handleProgressChange}
-        onMouseDown={handleProgressMouseDown}
-        onMouseUp={handleProgressMouseUp}
+        value={progress}
+        onChange={handleSeekChange}
+        onMouseDown={handleSeekStart}
+        onMouseUp={handleSeekEnd}
+        onTouchStart={handleSeekStart}
+        onTouchEnd={handleSeekEnd}
         className="range range-xs range-primary w-full"
       />
 
       {/* Bottom Controls */}
       <div className="flex justify-between items-center w-full">
-        {/* Left Controls */}
         <div className="flex items-center space-x-2">
           <button onClick={prevTrack} className="btn btn-ghost btn-circle btn-sm">
             <SkipBack fill="currentColor" stroke="currentColor" size={16} />
@@ -190,7 +194,6 @@ export default function LofiPlayer() {
           </button>
         </div>
 
-        {/* Right: Volume */}
         <div className="flex items-center space-x-3">
           <Volume2 size={18} />
           <input
