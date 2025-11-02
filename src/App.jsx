@@ -2,6 +2,7 @@ import { Canvas, useFrame, useLoader } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import { useRef, useState } from 'react';
 import * as THREE from 'three';
+import LofiPlayer from './LofiPlayer';
 
 // 🌌 Space background
 function Background() {
@@ -177,6 +178,8 @@ export default function App() {
 
         <OrbitControls enableDamping enablePan minDistance={20} maxDistance={300} />
       </Canvas>
+
+      <LofiPlayer />
     </div>
   );
 }
