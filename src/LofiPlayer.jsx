@@ -93,15 +93,15 @@ export default function LofiPlayer() {
 
         {/* Controls */}
         <div className="flex items-center space-x-2 text-gray-100">
-          <button onClick={prevTrack} className="btn btn-primary btn-circle btn-sm">
+          <button onClick={prevTrack} className="btn btn-primary btn-ghost btn-circle btn-sm">
             <SkipBack fill="white" stroke="white" size={16} />
           </button>
 
-          <button onClick={togglePlay} className="btn btn-primary btn-circle btn-sm">
+          <button onClick={togglePlay} className="btn btn-primary btn-ghost btn-circle btn-sm">
             {isPlaying ? <Pause fill="white" stroke="white" size={16} /> : <Play fill="white" stroke="white" size={16} />}
           </button>
 
-          <button onClick={nextTrack} className="btn btn-primary btn-circle btn-sm">
+          <button onClick={nextTrack} className="btn btn-primary btn-ghost btn-circle btn-sm">
             <SkipForward fill="white" stroke="white" size={16} />
           </button>
         </div>
