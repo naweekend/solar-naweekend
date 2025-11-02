@@ -43,6 +43,10 @@ function Sun() {
 function Saturn({ showOrbit, ref }) {
   const ringTexture = useLoader(THREE.TextureLoader, '/saturn-rings.png');
 
+  // Rotate the texture 90° so it goes "up and down"
+  ringTexture.rotation = Math.PI / 2;
+  ringTexture.center.set(0.5, 0.5); // rotate around center
+
   return (
     <Planet
       texturePath="/saturn.jpg"
@@ -54,8 +58,13 @@ function Saturn({ showOrbit, ref }) {
       ref={ref}
     >
       <mesh rotation={[Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[3, 5, 128]} />
-        <meshBasicMaterial map={ringTexture} side={THREE.DoubleSide} transparent opacity={0.9} />
+        <ringGeometry args={[3, 5, 128, 1]} /> {/* note 1 radial segment so vertical texture is clearer */}
+        <meshBasicMaterial
+          map={ringTexture}
+          side={THREE.DoubleSide}
+          transparent
+          opacity={1}
+        />
       </mesh>
     </Planet>
   );
@@ -74,7 +83,7 @@ function CameraFollow({ targetRef, cameraRef, follow, zoomOut, setZoomOut }) {
       const pos = new THREE.Vector3();
       targetRef.current.getWorldPosition(pos);
 
-      cameraRef.current.position.lerp(new THREE.Vector3(pos.x + 10, pos.y + 5, pos.z + 10), 0.05);
+      cameraRef.current.position.lerp(new THREE.Vector3(pos.x - 20, pos.y + 20, pos.z - 20), 0.05);
       cameraRef.current.lookAt(pos);
     } else if (zoomOut) {
       // Smooth zoom-out
