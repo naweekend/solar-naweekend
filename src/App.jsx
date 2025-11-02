@@ -3,6 +3,8 @@ import { OrbitControls } from '@react-three/drei';
 import { useRef, useState } from 'react';
 import * as THREE from 'three';
 import LofiPlayer from './LofiPlayer';
+import EarthAndMoon from './EarthAndMoon';
+import Orbit from './Orbit';
 
 // 🌌 Space background
 function Background() {
@@ -20,8 +22,7 @@ function Sun() {
   const sunRef = useRef();
   const sunTexture = useLoader(THREE.TextureLoader, '/sun.jpg');
 
-  useFrame(({ clock }) => {
-    const t = clock.getElapsedTime();
+  useFrame(() => {
     sunRef.current.rotation.y += 0.001;
   });
 
@@ -34,21 +35,6 @@ function Sun() {
       <pointLight intensity={250} distance={800} decay={1} />
     </>
   );
-}
-
-// 🪐 Orbit visualization
-function Orbit({ radius }) {
-  const points = [];
-  const segments = 128;
-  for (let i = 0; i <= segments; i++) {
-    const theta = (i / segments) * 2 * Math.PI;
-    points.push(new THREE.Vector3(radius * Math.cos(theta), 0, radius * Math.sin(theta)));
-  }
-
-  const geometry = new THREE.BufferGeometry().setFromPoints(points);
-  const material = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.3 });
-
-  return <line geometry={geometry} material={material} />;
 }
 
 // 🌍 Generic planet
@@ -77,44 +63,7 @@ function Planet({ texturePath, size, distance, orbitSpeed, spinSpeed, showOrbit,
   );
 }
 
-// 🌍 Earth + 🌙 Moon combo
-function EarthAndMoon({ showOrbit }) {
-  const earthOrbitRef = useRef();
-  const moonOrbitRef = useRef();
-  const earthRef = useRef();
-
-  const earthTexture = useLoader(THREE.TextureLoader, '/earth.jpg');
-  const moonTexture = useLoader(THREE.TextureLoader, '/moon.jpg');
-
-  useFrame(({ clock }) => {
-    const t = clock.getElapsedTime();
-    earthOrbitRef.current.rotation.y = t * 0.2;
-    earthRef.current.rotation.y = t * 1.5;
-    moonOrbitRef.current.rotation.y = t * 1.2;
-  });
-
-  return (
-    <group ref={earthOrbitRef}>
-      {showOrbit && <Orbit radius={16} />}
-      <group position={[16, 0, 0]}>
-        <mesh ref={earthRef}>
-          <sphereGeometry args={[1.2, 64, 64]} />
-          <meshStandardMaterial map={earthTexture} roughness={1} />
-        </mesh>
-
-        <group ref={moonOrbitRef}>
-          {showOrbit && <Orbit radius={2} />}
-          <mesh position={[2, 0, 0]}>
-            <sphereGeometry args={[0.4, 64, 64]} />
-            <meshStandardMaterial map={moonTexture} roughness={1} />
-          </mesh>
-        </group>
-      </group>
-    </group>
-  );
-}
-
-// 🪐 Saturn with Rings
+// 🪐 Saturn
 function Saturn({ showOrbit }) {
   const ringTexture = useLoader(THREE.TextureLoader, '/saturn-rings.png');
 
@@ -127,27 +76,44 @@ function Saturn({ showOrbit }) {
       spinSpeed={0.018}
       showOrbit={showOrbit}
     >
-      {/* Saturn Rings */}
       <mesh rotation={[Math.PI / 2, 0, 0]}>
         <ringGeometry args={[3, 5, 128]} />
-        <meshBasicMaterial
-          map={ringTexture}
-          side={THREE.DoubleSide}
-          transparent={true}
-          opacity={0.9}
-        />
+        <meshBasicMaterial map={ringTexture} side={THREE.DoubleSide} transparent opacity={0.9} />
       </mesh>
     </Planet>
   );
 }
 
+// Camera follow
+function CameraFollow({ earthRef, cameraRef, followEarth }) {
+  useFrame(() => {
+    if (followEarth && earthRef.current && cameraRef.current) {
+      const earthPos = new THREE.Vector3();
+      earthRef.current.getWorldPosition(earthPos);
+
+      // Smooth follow
+      cameraRef.current.position.lerp(
+        new THREE.Vector3(earthPos.x + 10, earthPos.y + 5, earthPos.z + 10),
+        0.05
+      );
+
+      cameraRef.current.lookAt(earthPos);
+    }
+  });
+  return null;
+}
+
 export default function App() {
   const [showOrbits, setShowOrbits] = useState(true);
+  const [followEarth, setFollowEarth] = useState(false);
+
+  const cameraRef = useRef();
+  const earthRef = useRef();
 
   return (
     <div className="w-screen h-screen bg-black relative">
-      {/* Checkbox UI */}
-      <div className="absolute top-5 left-5 z-10">
+      {/* UI */}
+      <div className="absolute top-5 left-5 z-20 flex flex-col gap-2">
         <label className="flex items-center gap-2 text-white">
           <input
             type="checkbox"
@@ -157,25 +123,36 @@ export default function App() {
           />
           Show Orbits
         </label>
+
+        <button
+          className="btn btn-xs btn-primary mt-2"
+          onClick={() => setFollowEarth(!followEarth)}
+        >
+          {followEarth ? 'Stop Following Earth' : 'Follow Earth'}
+        </button>
       </div>
 
-      <Canvas camera={{ position: [0, 40, 80], fov: 60 }}>
+      <Canvas
+        camera={{ position: [0, 40, 80], fov: 60 }}
+        onCreated={({ camera }) => {
+          cameraRef.current = camera;
+        }}
+      >
         <color attach="background" args={[0x000000]} />
         <Background />
-
         <ambientLight intensity={0.4} color={0x222233} />
         <Sun />
 
-        {/* Planets */}
         <Planet texturePath="/mercury.jpg" size={0.5} distance={8} orbitSpeed={0.6} spinSpeed={0.01} showOrbit={showOrbits} />
         <Planet texturePath="/venus.jpg" size={1} distance={12} orbitSpeed={0.5} spinSpeed={0.008} showOrbit={showOrbits} />
-        <EarthAndMoon showOrbit={showOrbits} />
+        <EarthAndMoon showOrbit={showOrbits} ref={earthRef} />
         <Planet texturePath="/mars.jpg" size={0.8} distance={20} orbitSpeed={0.18} spinSpeed={0.015} showOrbit={showOrbits} />
         <Planet texturePath="/jupiter.jpg" size={3} distance={28} orbitSpeed={0.1} spinSpeed={0.02} showOrbit={showOrbits} />
         <Saturn showOrbit={showOrbits} />
         <Planet texturePath="/uranus.jpg" size={2} distance={48} orbitSpeed={0.05} spinSpeed={0.012} showOrbit={showOrbits} />
         <Planet texturePath="/neptune.jpg" size={2} distance={58} orbitSpeed={0.03} spinSpeed={0.01} showOrbit={showOrbits} />
 
+        <CameraFollow earthRef={earthRef} cameraRef={cameraRef} followEarth={followEarth} />
         <OrbitControls enableDamping enablePan minDistance={20} maxDistance={300} />
       </Canvas>
 
