@@ -373,7 +373,7 @@ export default function LofiPlayer() {
                 );
               })}
             </select>
-            <div className="fixed -right-6 top-3">
+            <div className="fixed -right-6 top-3 overflow-x-hidden">
               <AudioVisualizer audioRef={audioRef} isPlaying={isPlaying} />
             </div>
           </div>
