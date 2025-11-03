@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Play, Pause, SkipBack, SkipForward, Volume2 } from "lucide-react";
+import { Play, Pause, SkipBack, SkipForward, Volume2, Music } from "lucide-react";
 
 const MUSIC_TYPES = ["🎧 lofi", "🎷 classical", "🎙️ urdu", "🎻 english"];
 
@@ -46,12 +46,8 @@ export function AudioVisualizer({ audioRef, isPlaying }) {
       const barCount = 12;
       const barWidth = width / barCount;
       const gradient = c.createLinearGradient(0, 0, width, 0);
-      gradient.addColorStop(0.0, "#605DFF");
-      gradient.addColorStop(0.2, "#605DFF");
-      gradient.addColorStop(0.4, "#605DFF");
-      gradient.addColorStop(0.6, "#605DFF");
-      gradient.addColorStop(0.8, "#605DFF");
-      gradient.addColorStop(1.0, "#605DFF");
+      gradient.addColorStop(0, "#605DFF");
+      gradient.addColorStop(1, "#605DFF");
 
       c.clearRect(0, 0, width, height);
 
@@ -60,9 +56,6 @@ export function AudioVisualizer({ audioRef, isPlaying }) {
         const barHeight = (dataArray[dataIndex] / 255) * height * 0.9;
 
         const x = i * barWidth;
-        const y = height - barHeight;
-
-        // draw bar blocks for LED-like effect
         const blockHeight = 4;
         const blockGap = 1;
         const numBlocks = Math.floor(barHeight / (blockHeight + blockGap));
@@ -82,15 +75,135 @@ export function AudioVisualizer({ audioRef, isPlaying }) {
   return (
     <canvas
       ref={canvasRef}
-      width={250}
+      width={150}
       height={60}
-      className="opacity-90 w-30"
+      className="opacity-90"
     />
   );
 }
 
+// ------------------------------
+// Pomodoro Timer Component 🍅
+// ------------------------------
+export function PomodoroTimer() {
+  const DURATIONS = {
+    "25 mins": 25 * 60,
+    "50 mins": 50 * 60,
+    "90 mins": 90 * 60,
+  };
 
+  const [selectedDuration, setSelectedDuration] = useState("50 mins");
+  const [secondsLeft, setSecondsLeft] = useState(DURATIONS["50 mins"]);
+  const [isRunning, setIsRunning] = useState(false);
+
+  // Countdown logic
+  useEffect(() => {
+    if (!isRunning) return;
+    const timer = setInterval(() => {
+      setSecondsLeft((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [isRunning]);
+
+  // Save progress
+  useEffect(() => {
+    localStorage.setItem("pomodoro_secondsLeft", secondsLeft);
+    localStorage.setItem("pomodoro_selectedDuration", selectedDuration);
+  }, [secondsLeft, selectedDuration]);
+
+  // Load saved values
+  useEffect(() => {
+    const savedSeconds = localStorage.getItem("pomodoro_secondsLeft");
+    const savedDuration = localStorage.getItem("pomodoro_selectedDuration");
+    if (savedSeconds && savedDuration) {
+      setSecondsLeft(Number(savedSeconds));
+      setSelectedDuration(savedDuration);
+    }
+  }, []);
+
+
+  // Convert seconds to mm:ss
+  const minutes = Math.floor(secondsLeft / 60)
+    .toString()
+    .padStart(2, "0");
+  const seconds = (secondsLeft % 60).toString().padStart(2, "0");
+
+  const totalTime = DURATIONS[selectedDuration];
+  const progress = (secondsLeft / totalTime) * 100;
+
+  useEffect(() => {
+    console.log(progress)
+  }, [progress])
+
+  // Handle duration change
+  const handleDurationChange = (e) => {
+    const newDuration = e.target.value;
+    setSelectedDuration(newDuration);
+    setIsRunning(false);
+    setSecondsLeft(DURATIONS[newDuration]);
+  };
+
+  return (
+    <div className="flex items-center w-full justify-center gap-5">
+      {/* Circular progress */}
+      <div className="relative">
+        <div
+          className="radial-progress text-primary transition-all duration-500"
+          style={{
+            "--value": progress,
+            "--size": "5rem",
+            "--thickness": "6px",
+          }}
+          role="progressbar"
+        >
+          <span className="text-lg font-semibold tabular-nums">
+            {minutes}:{seconds}
+          </span>
+        </div>
+      </div>
+
+      <div className="flex flex-col">
+        {/* Duration Selector */}
+        <select
+          className="select select-bordered select-sm w-37 mb-1"
+          value={selectedDuration}
+          onChange={handleDurationChange}
+          disabled={isRunning} // prevent changing mid-session
+        >
+          {Object.keys(DURATIONS).map((label) => (
+            <option key={label} value={label}>
+              {label}
+            </option>
+          ))}
+        </select>
+        {/* Controls */}
+        <div className="flex gap-1">
+          <button
+            className="btn btn-primary btn-sm w-18"
+            onClick={() => setIsRunning((r) => !r)}
+          >
+            {isRunning ? "Pause" : "Start"}
+          </button>
+          <button
+            className="btn btn-secondary w-18 btn-sm"
+            onClick={() => {
+              setIsRunning(false);
+              setSecondsLeft(totalTime);
+            }}
+          >
+            Reset
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ------------------------------
+// Main Lofi Player Component 🎧
+// ------------------------------
 export default function LofiPlayer() {
+  const [tab, setTab] = useState("music");
   const [musicType, setMusicType] = useState("lofi");
   const [currentTrack, setCurrentTrack] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -107,7 +220,6 @@ export default function LofiPlayer() {
   const togglePlay = async () => {
     const audio = audioRef.current;
     if (!audio) return;
-
     try {
       if (audio.paused) {
         await audio.play();
@@ -121,29 +233,20 @@ export default function LofiPlayer() {
     }
   };
 
-  const nextTrack = () => {
-    setCurrentTrack((prev) => (prev + 1) % tracks.length);
-  };
-
-  const prevTrack = () => {
-    setCurrentTrack((prev) => (prev - 1 + tracks.length) % tracks.length);
-  };
+  const nextTrack = () => setCurrentTrack((p) => (p + 1) % tracks.length);
+  const prevTrack = () => setCurrentTrack((p) => (p - 1 + tracks.length) % tracks.length);
 
   const handleTimeUpdate = () => {
     const audio = audioRef.current;
     if (!audio || isSeeking.current) return;
-
     const current = audio.currentTime;
     const duration = audio.duration;
     if (!duration || isNaN(duration)) return;
 
     setProgress(current / duration);
-
     const remaining = Math.max(duration - current, 0);
     const minutes = Math.floor(remaining / 60);
-    const seconds = Math.floor(remaining % 60)
-      .toString()
-      .padStart(2, "0");
+    const seconds = Math.floor(remaining % 60).toString().padStart(2, "0");
     setTimeLeft(`${minutes}:${seconds}`);
   };
 
@@ -153,7 +256,6 @@ export default function LofiPlayer() {
     wasPlayingBeforeSeek.current = !audioRef.current.paused;
     audioRef.current.pause();
   };
-
   const handleSeekEnd = (e) => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -163,32 +265,24 @@ export default function LofiPlayer() {
     isSeeking.current = false;
     if (wasPlayingBeforeSeek.current) audio.play().catch(() => { });
   };
-
-  const handleSeekChange = (e) => {
-    setProgress(parseFloat(e.target.value));
-  };
-
+  const handleSeekChange = (e) => setProgress(parseFloat(e.target.value));
   const handleVolumeChange = (e) => {
-    const newVolume = parseFloat(e.target.value);
-    setVolume(newVolume);
-    if (audioRef.current) audioRef.current.volume = newVolume;
+    const newVol = parseFloat(e.target.value);
+    setVolume(newVol);
+    if (audioRef.current) audioRef.current.volume = newVol;
   };
-
   const handleMusicTypeChange = (e) => {
     setMusicType(e.target.value);
     setCurrentTrack(0);
   };
 
-  // When track/type changes, load and play if already playing
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
-
     audio.pause();
     audio.load();
     setProgress(0);
     setTimeLeft("0:00");
-
     const handleCanPlay = async () => {
       if (isPlaying) {
         try {
@@ -198,14 +292,10 @@ export default function LofiPlayer() {
         }
       }
     };
-
     audio.addEventListener("canplaythrough", handleCanPlay);
-    return () => {
-      audio.removeEventListener("canplaythrough", handleCanPlay);
-    };
+    return () => audio.removeEventListener("canplaythrough", handleCanPlay);
   }, [musicType, currentTrack]);
 
-  // Sync play/pause with state
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -213,90 +303,117 @@ export default function LofiPlayer() {
     else audio.pause();
   }, [isPlaying]);
 
-  // Sync volume
   useEffect(() => {
     if (audioRef.current) audioRef.current.volume = volume;
   }, [volume]);
 
   return (
-    <div className="fixed bottom-5 left-5 sm:w-96 w-[calc(100vw-2.5rem)] backdrop-blur-md rounded-xl p-4 flex flex-col gap-3 shadow-lg bg-base-200 text-base-content">
-      <audio
-        ref={audioRef}
-        src={`/music/${tracks[currentTrack]}.mp3`}
-        onTimeUpdate={handleTimeUpdate}
-        onEnded={nextTrack}
-      />
-
-      {/* Top bar with visualizer */}
-      <div className="flex justify-between items-center w-full">
-        <select
-          className="select select-xs max-w-24 bg-base-200 px-0 border-0 outline-0 font-medium"
-          value={musicType}
-          onChange={handleMusicTypeChange}
+    <div className="fixed bottom-5 left-5 sm:w-96 w-[calc(100vw-2.5rem)] backdrop-blur-md rounded-xl p-3 flex flex-col gap-3 shadow-lg bg-base-200 text-base-content h-40">
+      {/* Tabs */}
+      <div role="tablist" className="tabs tabs-box tabs-xs w-full">
+        <a
+          role="tab"
+          className={`tab ${tab === "music" ? "tab-active" : ""} flex gap-1`}
+          onClick={() => setTab("music")}
         >
-          {MUSIC_TYPES.map((type) => {
-            const [emoji, name] = type.split(" ");
-            return (
-              <option key={type} value={name}>
-                {emoji} {name.charAt(0).toUpperCase() + name.slice(1)}
-              </option>
-            );
-          })}
-        </select>
-        <div className="w-22.5 overflow-x-hidden">
-          <AudioVisualizer audioRef={audioRef} isPlaying={isPlaying} />
-        </div>
+          <Music size={13} /> <span>Music</span>
+        </a>
+        <a
+          role="tab"
+          className={`tab ${tab === "timer" ? "tab-active" : ""}`}
+          onClick={() => setTab("timer")}
+        >
+          🍅 Timer
+        </a>
       </div>
 
-      {/* Progress bar + time */}
-      <div className="flex items-center w-full gap-2">
-        <input
-          type="range"
-          min={0}
-          max={1}
-          step={0.001}
-          value={progress}
-          onChange={handleSeekChange}
-          onMouseDown={handleSeekStart}
-          onMouseUp={handleSeekEnd}
-          onTouchStart={handleSeekStart}
-          onTouchEnd={handleSeekEnd}
-          className="range range-xs range-primary"
-        />
-        <span className="text-xs opacity-80 w-6 text-right">{timeLeft}</span>
-      </div>
-
-      {/* Controls */}
-      <div className="flex justify-between items-center w-full">
-        <div className="flex items-center space-x-2">
-          <button onClick={prevTrack} className="btn btn-ghost btn-circle btn-sm">
-            <SkipBack fill="currentColor" stroke="currentColor" size={16} />
-          </button>
-
-          <button onClick={togglePlay} className="btn btn-primary btn-circle btn-sm">
-            {isPlaying ? (
-              <Pause fill="currentColor" stroke="currentColor" size={16} />
-            ) : (
-              <Play fill="currentColor" stroke="currentColor" size={16} />
-            )}
-          </button>
-
-          <button onClick={nextTrack} className="btn btn-ghost btn-circle btn-sm">
-            <SkipForward fill="currentColor" stroke="currentColor" size={16} />
-          </button>
-        </div>
-
-        <div className="flex items-center space-x-3">
-          <Volume2 size={18} />
-          <input
-            type="range"
-            min={0}
-            max={1}
-            step={0.01}
-            value={volume}
-            onChange={handleVolumeChange}
-            className="range range-xs range-base-content w-16"
+      <div className="relative w-full h-full">
+        {/* Music tab — hidden when not active */}
+        <div className={`${tab === "music" ? "block" : "hidden"} w-full flex flex-col gap-2.5`}>
+          <audio
+            ref={audioRef}
+            src={`/music/${tracks[currentTrack]}.mp3`}
+            onTimeUpdate={handleTimeUpdate}
+            onEnded={nextTrack}
           />
+
+          {/* Top bar */}
+          <div className="flex justify-between items-center w-full relative">
+            <select
+              className="select bg-base-200 select-xs max-w-24 px-0 border-0 outline-0 font-medium"
+              value={musicType}
+              onChange={handleMusicTypeChange}
+            >
+              {MUSIC_TYPES.map((type) => {
+                const [emoji, name] = type.split(" ");
+                return (
+                  <option key={type} value={name}>
+                    {emoji} {name.charAt(0).toUpperCase() + name.slice(1)}
+                  </option>
+                );
+              })}
+            </select>
+            <div className="fixed -right-6 top-3">
+              <AudioVisualizer audioRef={audioRef} isPlaying={isPlaying} />
+            </div>
+          </div>
+
+          {/* Progress */}
+          <div className="flex items-center w-full gap-3.5">
+            <input
+              type="range"
+              min={0}
+              max={1}
+              step={0.001}
+              value={progress}
+              onChange={handleSeekChange}
+              onMouseDown={handleSeekStart}
+              onMouseUp={handleSeekEnd}
+              onTouchStart={handleSeekStart}
+              onTouchEnd={handleSeekEnd}
+              className="range range-xs range-primary"
+            />
+            <span className="text-xs opacity-80 w-6 text-right">{timeLeft}</span>
+          </div>
+
+          {/* Controls */}
+          <div className="flex justify-between items-center w-full">
+            <div className="flex items-center space-x-1">
+              <button onClick={prevTrack} className="btn btn-ghost btn-circle btn-sm">
+                <SkipBack fill="currentColor" stroke="currentColor" size={16} />
+              </button>
+
+              <button onClick={togglePlay} className="btn btn-primary btn-circle btn-sm">
+                {isPlaying ? (
+                  <Pause fill="currentColor" stroke="currentColor" size={16} />
+                ) : (
+                  <Play fill="currentColor" stroke="currentColor" size={16} />
+                )}
+              </button>
+
+              <button onClick={nextTrack} className="btn btn-ghost btn-circle btn-sm">
+                <SkipForward fill="currentColor" stroke="currentColor" size={16} />
+              </button>
+            </div>
+
+            <div className="flex items-center space-x-3">
+              <Volume2 size={18} />
+              <input
+                type="range"
+                min={0}
+                max={1}
+                step={0.01}
+                value={volume}
+                onChange={handleVolumeChange}
+                className="range range-xs range-base-content w-16"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Timer tab — hidden when not active */}
+        <div className={`${tab === "timer" ? "flex" : "hidden"} justify-center`}>
+          <PomodoroTimer />
         </div>
       </div>
     </div>
