@@ -46,12 +46,12 @@ export function AudioVisualizer({ audioRef, isPlaying }) {
       const barCount = 12;
       const barWidth = width / barCount;
       const gradient = c.createLinearGradient(0, 0, width, 0);
-      gradient.addColorStop(0.0, "#ff00cc");
-      gradient.addColorStop(0.2, "#ff3300");
-      gradient.addColorStop(0.4, "#ffee00");
-      gradient.addColorStop(0.6, "#00ff66");
-      gradient.addColorStop(0.8, "#00ccff");
-      gradient.addColorStop(1.0, "#6600ff");
+      gradient.addColorStop(0.0, "#605DFF");
+      gradient.addColorStop(0.2, "#605DFF");
+      gradient.addColorStop(0.4, "#605DFF");
+      gradient.addColorStop(0.6, "#605DFF");
+      gradient.addColorStop(0.8, "#605DFF");
+      gradient.addColorStop(1.0, "#605DFF");
 
       c.clearRect(0, 0, width, height);
 
@@ -84,7 +84,7 @@ export function AudioVisualizer({ audioRef, isPlaying }) {
       ref={canvasRef}
       width={250}
       height={60}
-      className="opacity-90 rounded-md w-30"
+      className="opacity-90 w-30"
     />
   );
 }
@@ -263,7 +263,7 @@ export default function LofiPlayer() {
           onTouchEnd={handleSeekEnd}
           className="range range-xs range-primary"
         />
-        <span className="text-xs opacity-80 w-10 text-right">{timeLeft}</span>
+        <span className="text-xs opacity-80 w-6 text-right">{timeLeft}</span>
       </div>
 
       {/* Controls */}
