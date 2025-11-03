@@ -124,7 +124,7 @@ export default function App() {
           toast: '!bg-base-200 !text-base-content !border-0 !max-sm:w-[calc(100vw-2.5rem)]',
         },
       }}
-        mobileOffset={{ bottom: "160px", left: "20px" }} visibleToasts={1} richColors dismissible />
+        mobileOffset={{ bottom: "190px", left: "20px" }} visibleToasts={1} richColors dismissible />
       <div className="w-screen h-screen bg-black relative">
         {/* Floating Top Panel */}
         <div className="absolute top-5 left-5 group sm:w-100 w-[calc(100vw-2.5rem)] z-20 flex flex-col gap-3 bg-base-200 backdrop-blur-md p-4 rounded-xl shadow-lg text-base-content">
