@@ -3,6 +3,93 @@ import { Play, Pause, SkipBack, SkipForward, Volume2 } from "lucide-react";
 
 const MUSIC_TYPES = ["🎧 lofi", "🎷 classical", "🎙️ urdu", "🎻 english"];
 
+export function AudioVisualizer({ audioRef, isPlaying }) {
+  const canvasRef = useRef(null);
+  const analyserRef = useRef(null);
+  const audioCtxRef = useRef(null);
+  const sourceRef = useRef(null);
+
+  useEffect(() => {
+    if (!audioRef.current) return;
+
+    if (!audioCtxRef.current) {
+      audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)();
+    }
+
+    const audio = audioRef.current;
+    const ctx = audioCtxRef.current;
+
+    if (!analyserRef.current) {
+      analyserRef.current = ctx.createAnalyser();
+      analyserRef.current.fftSize = 128;
+    }
+
+    if (!sourceRef.current) {
+      sourceRef.current = ctx.createMediaElementSource(audio);
+      sourceRef.current.connect(analyserRef.current);
+      analyserRef.current.connect(ctx.destination);
+    }
+
+    const analyser = analyserRef.current;
+    const canvas = canvasRef.current;
+    const c = canvas.getContext("2d");
+
+    const bufferLength = analyser.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
+
+    const draw = () => {
+      requestAnimationFrame(draw);
+      analyser.getByteFrequencyData(dataArray);
+
+      const width = canvas.width;
+      const height = canvas.height;
+      const barCount = 12;
+      const barWidth = width / barCount;
+      const gradient = c.createLinearGradient(0, 0, width, 0);
+      gradient.addColorStop(0.0, "#ff00cc");
+      gradient.addColorStop(0.2, "#ff3300");
+      gradient.addColorStop(0.4, "#ffee00");
+      gradient.addColorStop(0.6, "#00ff66");
+      gradient.addColorStop(0.8, "#00ccff");
+      gradient.addColorStop(1.0, "#6600ff");
+
+      c.clearRect(0, 0, width, height);
+
+      for (let i = 0; i < barCount; i++) {
+        const dataIndex = Math.floor((i / barCount) * bufferLength);
+        const barHeight = (dataArray[dataIndex] / 255) * height * 0.9;
+
+        const x = i * barWidth;
+        const y = height - barHeight;
+
+        // draw bar blocks for LED-like effect
+        const blockHeight = 4;
+        const blockGap = 1;
+        const numBlocks = Math.floor(barHeight / (blockHeight + blockGap));
+
+        for (let j = 0; j < numBlocks; j++) {
+          const blockY = height - (j + 1) * (blockHeight + blockGap);
+          c.fillStyle = gradient;
+          c.fillRect(x + 1, blockY, barWidth - 2, blockHeight);
+        }
+      }
+    };
+
+    if (isPlaying) ctx.resume();
+    draw();
+  }, [audioRef, isPlaying]);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      width={250}
+      height={60}
+      className="opacity-90 rounded-md w-30"
+    />
+  );
+}
+
+
 export default function LofiPlayer() {
   const [musicType, setMusicType] = useState("english");
   const [currentTrack, setCurrentTrack] = useState(0);
@@ -140,7 +227,7 @@ export default function LofiPlayer() {
         onEnded={nextTrack}
       />
 
-      {/* Top Bar */}
+      {/* Top bar with visualizer */}
       <div className="flex justify-between items-center w-full">
         <select
           className="select select-xs max-w-24 bg-base-200 px-0 border-0 outline-0 font-medium"
@@ -156,25 +243,30 @@ export default function LofiPlayer() {
             );
           })}
         </select>
-        <span className="text-xs opacity-80">{timeLeft}</span>
+        <div className="w-22.5 overflow-x-hidden">
+          <AudioVisualizer audioRef={audioRef} isPlaying={isPlaying} />
+        </div>
       </div>
 
-      {/* Progress Bar */}
-      <input
-        type="range"
-        min={0}
-        max={1}
-        step={0.001}
-        value={progress}
-        onChange={handleSeekChange}
-        onMouseDown={handleSeekStart}
-        onMouseUp={handleSeekEnd}
-        onTouchStart={handleSeekStart}
-        onTouchEnd={handleSeekEnd}
-        className="range range-xs range-primary w-full"
-      />
+      {/* Progress bar + time */}
+      <div className="flex items-center w-full gap-2">
+        <input
+          type="range"
+          min={0}
+          max={1}
+          step={0.001}
+          value={progress}
+          onChange={handleSeekChange}
+          onMouseDown={handleSeekStart}
+          onMouseUp={handleSeekEnd}
+          onTouchStart={handleSeekStart}
+          onTouchEnd={handleSeekEnd}
+          className="range range-xs range-primary"
+        />
+        <span className="text-xs opacity-80 w-10 text-right">{timeLeft}</span>
+      </div>
 
-      {/* Bottom Controls */}
+      {/* Controls */}
       <div className="flex justify-between items-center w-full">
         <div className="flex items-center space-x-2">
           <button onClick={prevTrack} className="btn btn-ghost btn-circle btn-sm">
