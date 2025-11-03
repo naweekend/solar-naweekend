@@ -91,7 +91,7 @@ export function AudioVisualizer({ audioRef, isPlaying }) {
 
 
 export default function LofiPlayer() {
-  const [musicType, setMusicType] = useState("english");
+  const [musicType, setMusicType] = useState("lofi");
   const [currentTrack, setCurrentTrack] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
