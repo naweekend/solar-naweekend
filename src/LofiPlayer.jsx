@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Play, Pause, SkipBack, SkipForward, Volume2, Music } from "lucide-react";
-import { toast } from "sonner";
+import { Play, Pause, SkipBack, SkipForward, Volume2, Music, NotebookPen } from "lucide-react";
 
 const MUSIC_TYPES = ["🎧 lofi", "🎷 classical", "🎙️ urdu", "🎻 english"];
 
@@ -48,7 +47,7 @@ export function AudioVisualizer({ audioRef, isPlaying }) {
       const barWidth = width / barCount;
       const gradient = c.createLinearGradient(0, 0, width, 0);
       gradient.addColorStop(0, "#605DFF");
-      gradient.addColorStop(1, "#605DFF");
+      gradient.addColorStop(1, "#FB322B");
 
       c.clearRect(0, 0, width, height);
 
@@ -97,7 +96,7 @@ export function PomodoroTimer() {
   const [secondsLeft, setSecondsLeft] = useState(DURATIONS["50 mins"]);
   const [isRunning, setIsRunning] = useState(false);
 
-  // Countdown logic
+  // Countdown logicPomodor
   useEffect(() => {
     if (!isRunning) return;
     const timer = setInterval(() => {
@@ -158,7 +157,7 @@ export function PomodoroTimer() {
 
 
   return (
-    <div className="flex items-center w-full justify-center gap-5">
+    <div className="flex items-center w-full justify-center gap-5 mt-1">
       {/* Circular progress */}
       <div className="relative">
         <div
@@ -193,13 +192,13 @@ export function PomodoroTimer() {
         {/* Controls */}
         <div className="flex gap-1">
           <button
-            className="btn btn-primary btn-sm w-18"
+            className="btn bg-[#FF2A23] text-white btn-sm w-18"
             onClick={() => setIsRunning((r) => !r)}
           >
             {isRunning ? "Pause" : "Start"}
           </button>
           <button
-            className="btn btn-secondary w-18 btn-sm"
+            className="btn bg-base-300 w-18 btn-sm"
             onClick={() => {
               setIsRunning(false);
               setSecondsLeft(totalTime);
@@ -339,11 +338,18 @@ export default function LofiPlayer() {
         >
           🍅 Timer
         </a>
+        <a
+          role="tab"
+          className={`tab ${tab === "notes" ? "tab-active" : ""} flex gap-1`}
+          onClick={() => setTab("notes")}
+        >
+          <NotebookPen size={13} /> <span>Notes</span>
+        </a>
       </div>
 
       <div className="relative w-full h-full">
         {/* Music tab — hidden when not active */}
-        <div className={`${tab === "music" ? "block" : "hidden"} w-full flex flex-col gap-2.5`}>
+        <div className={`${tab === "music" ? "block" : "hidden"} w-full flex px-2 flex-col gap-2.5`}>
           <audio
             ref={audioRef}
             src={`/music/${tracks[currentTrack]}.mp3`}
@@ -429,7 +435,38 @@ export default function LofiPlayer() {
         <div className={`${tab === "timer" ? "flex" : "hidden"} justify-center`}>
           <PomodoroTimer />
         </div>
+
+
+        {/* Todo List tab — hidden when not active */}
+        <div className={`${tab === "notes" ? "flex" : "hidden"} justify-center`}>
+          <NotesSection />
+        </div>
       </div>
     </div>
   );
 }
+
+export function NotesSection() {
+  // Load from localStorage or start empty
+  const [content, setContent] = useState(() => {
+    return localStorage.getItem("notesContent") || "";
+  });
+
+  // Auto-save to localStorage on change
+  useEffect(() => {
+    localStorage.setItem("notesContent", content);
+  }, [content]);
+
+  return (
+    <div className="w-full h-22">
+      <textarea
+        value={content}
+        onChange={(e) => setContent(e.target.value)}
+        placeholder="Write your notes here..."
+        className="w-full h-full p-2 text-sm text-base-content resize-none wrap-break-word whitespace-pre-wrap outline-none"
+      />
+    </div>
+  );
+}
+
+
