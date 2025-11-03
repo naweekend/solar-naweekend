@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Play, Pause, SkipBack, SkipForward, Volume2, Music } from "lucide-react";
+import { toast } from "sonner";
 
 const MUSIC_TYPES = ["🎧 lofi", "🎷 classical", "🎙️ urdu", "🎻 english"];
 
@@ -143,6 +144,19 @@ export function PomodoroTimer() {
     setSecondsLeft(DURATIONS[newDuration]);
   };
 
+  useEffect(() => {
+    if (secondsLeft === 0 && isRunning) {
+      // Stop the timer
+      setIsRunning(false);
+
+      // Show alert
+      alert("⏰ Time's up!");
+
+      // Optionally, you can play a sound or do other actions here
+    }
+  }, [secondsLeft, isRunning]);
+
+
   return (
     <div className="flex items-center w-full justify-center gap-5">
       {/* Circular progress */}
@@ -204,7 +218,7 @@ export function PomodoroTimer() {
 // ------------------------------
 export default function LofiPlayer() {
   const [tab, setTab] = useState("music");
-  const [musicType, setMusicType] = useState("lofi");
+  const [musicType, setMusicType] = useState("urdu");
   const [currentTrack, setCurrentTrack] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
