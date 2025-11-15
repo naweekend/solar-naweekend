@@ -2,6 +2,12 @@ import { useState, useRef, useEffect } from "react";
 import { Play, Pause, SkipBack, SkipForward, Volume2, Music, NotebookPen } from "lucide-react";
 
 const MUSIC_TYPES = ["🎧 lofi", "🎷 classical", "🎙️ urdu", "🎻 english"];
+const MUSIC_TRACK_COUNTS = {
+  lofi: 3,
+  classical: 3,
+  urdu: 4,
+  english: 3,
+};
 
 export function AudioVisualizer({ audioRef, isPlaying }) {
   const canvasRef = useRef(null);
@@ -228,7 +234,10 @@ export default function LofiPlayer() {
   const isSeeking = useRef(false);
   const wasPlayingBeforeSeek = useRef(false);
 
-  const tracks = [1, 2, 3].map((n) => `${musicType}-${n}`);
+  const tracks = Array.from(
+    { length: MUSIC_TRACK_COUNTS[musicType] || 3 }, // fallback to 3 if type is not defined
+    (_, i) => `${musicType}-${i + 1}`
+  );
 
   const togglePlay = async () => {
     const audio = audioRef.current;
