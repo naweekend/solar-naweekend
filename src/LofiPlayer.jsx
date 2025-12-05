@@ -5,7 +5,7 @@ const MUSIC_TYPES = ["🎧 lofi", "🎷 classical", "🎙️ urdu", "🎻 englis
 const MUSIC_TRACK_COUNTS = {
   lofi: 3,
   classical: 3,
-  urdu: 4,
+  urdu: 5,
   english: 3,
 };
 
